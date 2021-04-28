@@ -4,3 +4,4 @@ demo.log
 __pycache__
 paramiko
 orig
+logs
