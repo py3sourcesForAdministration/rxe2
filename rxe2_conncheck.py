@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-""" Module containing the procedures to handle uyuni server management
-    on the commandline. 
+""" Module containing the procedures to handle server management
+    with ssh on the commandline. 
 """   
 ##### Avoid pydoc errors
 import sys

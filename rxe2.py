@@ -53,14 +53,23 @@ def main():
 
   start = datetime.datetime.now()
   ### Do connection check always
-  hosts = rxe2_conncheck.check_conn(hosts,user,kwdict)
-  dbg.dprint(2,"leftover hosts to execute:",hosts)
-  
+  import asyncio, asyncssh
+  asyncio.get_event_loop().run_until_complete(
+      rxe2_mod_async.run_multiple_clients(hosts,cmd='Check#Only',username='root'))
+  #asyncio.get_event_loop().run_until_complete(rxe2_mod_async.check_conns(hosts,user))
+  #rxe2_mod_async.check_conns(hosts,user)
+  #dbg.dprint(0,avail)
+  #hosts = rxe2_conncheck.check_conn(hosts,user,kwdict)
+
+  dbg.dprint(0,"Started with number of hosts:",len(hosts))
+  dbg.dprint(0,"leftover hosts to execute   :",len(cfg.data.availhosts))
+  end = datetime.datetime.now()
+  dbg.dprint(0,"Took",end -start,"to execute")  
   ### Start for available hosts
   if len(hosts) > 0 :
-    client = ParallelSSHClient(hosts,user=user,allow_agent=False,**kwdict)
-    if copy: 
-      rxe2_mod_parallel.copy_cmd(client,copy,cmd,timeout)
+  #  client = ParallelSSHClient(hosts,user=user,allow_agent=False,**kwdict)
+  #  if copy: 
+  #    rxe2_mod_parallel.copy_cmd(client,copy,cmd,timeout)
   
     ###-------------------------------------------------------------------------
     ##### Start of interactive

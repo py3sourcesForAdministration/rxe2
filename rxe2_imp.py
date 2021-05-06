@@ -37,3 +37,4 @@ from   gevent import joinall
 import rxe2_mod_general
 import rxe2_mod_parallel
 import rxe2_conncheck
+import rxe2_mod_async
