@@ -5,3 +5,4 @@ __pycache__
 paramiko
 orig
 logs
+testprogs
