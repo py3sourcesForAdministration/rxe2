@@ -114,24 +114,36 @@ def list_hosts():
 def setup_logging():
   """ Initialize loguru log
   """
-  from __main__ import dbg,prgargs,prgdir
+  from __main__ import dbg,prgargs,prgdir,prgname
   dbg.entersub()
   loguru.logger.remove()
+  logfile = os.path.join(prgdir,'logs',prgname + ".log")
   if prgargs.log:
-    logname = prgargs.cmd.replace(' ','_') 
-    loguru.logger.add(os.path.join(prgdir,'logs',logname + ".log"),
+    #logname = prgargs.cmd.replace(' ','_') 
+    ### rotate if already to big
+    if os.path.isfile(logfile) and os.path.getsize(logfile) > 1000000 :
+      from datetime import date
+      currdate = date.today().strftime("%Y-%m-%d") 
+      move_to = os.path.join(prgdir,'logs',currdate+"_"+prgname+".log")
+      os.rename(logfile,move_to)
+    ### init log
+    loguru.logger.add(logfile,
         format="{time:YYYY-MM-DD HH:mm:ss} | {level:7} | {message}")
   dbg.leavesub()
+  return(logfile)
 
 ###-------------------------------------------------------------------------
 def print_hostline(user,host,cmd,opts):
   """ Just print user@host and command 
   """
   from __main__ import dbg,cfg
-  rst = cfg.data.colors.rst
-  fgy = cfg.data.colors.fgy
-  fgg = cfg.data.colors.fgg
-  print(f"{fgg}--------------- {user}@{host:25} {cmd} {opts}{rst}")
+  if host:
+    rst = cfg.data.colors.rst
+    fgy = cfg.data.colors.fgy
+    fgg = cfg.data.colors.fgg
+    print(f"{fgg}--------------- {user}@{host:25} {cmd} {opts}{rst}")
+  else:
+    dbg.dprint(0,"Host is unset")  
 
 ###-------------------------------------------------------------------------
 def print_error(host,e):
@@ -148,4 +160,13 @@ def print_log(host,e):
   hlen = cfg.data.hlen
 #  dbg.dprint(0, e)
   loguru.logger.info(f"{host:{hlen}} | {e}")
+###-------------------------------------------------------------------------
+def log_and_cleanup(lfile):
+  from __main__ import dbg,cfg,prgargs
+  if os.path.isfile(lfile):
+    if prgargs.log:
+      with open(lfile) as f:
+        for line in f: 
+          loguru.logger.info(f"  -- OUT: {line.rstrip()}")
+    os.remove(lfile)
 ###-------------------------------------------------------------------------

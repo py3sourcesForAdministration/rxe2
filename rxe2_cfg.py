@@ -7,8 +7,9 @@ if sys.argv[0].find('pydoc') > 0 :
 
 from datetime import date
 from   colorama import init, Fore, Back, Style
-from __main__ import prgdir
-
+from __main__ import prgdir,prgname
+capture_out = prgname+'_out.log'
+capture_err = prgname+'_err.log'
 data = {
   'nodefiles' : os.path.realpath(os.path.join(prgdir,'nodefiles_use')),
   'cmdfiles'  : os.path.realpath(os.path.join(prgdir,'cmdfiles_use')),
@@ -21,7 +22,10 @@ data = {
   }, 
   'hlen'      : 13,
   'cptimeout' : 3,
-  'chktimeout': 0.5,
+  'chktimeout': 1.5,
+  'cap_out'   : capture_out,
+  'cap_err'   : capture_err,
+  'redirect'  : " ".join(['|','tee',capture_out,')','3>&1','1>&2','2>&3','|','tee',capture_err]) 
 }
 argdefaults = { 
   'debug'       : 0,

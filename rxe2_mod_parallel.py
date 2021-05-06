@@ -102,22 +102,19 @@ def show_output(client,output,cmd,opts):
       obj.client.close_channel(obj.channel)
       #client.host_clients[host].close_channel(obj.channel)
 #    else:
+    loguru.logger.info(f"{client.user}@{host:25} P {cmd} {opts}")
+    exitline = f"  -- Exit Code: {obj.exit_code:3}, Exception: '{obj.exception}'"
+    loguru.logger.info(exitline)
+    if obj.exit_code is not None and obj.exit_code != 0 :
+      dbg.dprint(256,exitline)
     if len(read):
       for line in read:
         print(f"{line}") 
-        loguru.logger.info(f"{host:{hlen}} | {line}")
-          #client.reset_output_generators(obj)
-      if obj.exit_code is not None and obj.exit_code != 0 :
-        #line = f"EXIT: {obj.exit_code:3}, Exception: '{obj.exception}'"
-        line = f"EXIT: {obj.exit_code:3}, Exception: '{obj.exception}'"
-        dbg.dprint(256,line)
-        loguru.logger.error(f"{host:{hlen}} | {line}")
-          #client.host_clients[host].close_channel(obj.channel)
-        #obj.client.close_channel(obj.channel)
+        loguru.logger.info(f"  -- OUT: {line.rstrip()}")
     else:  
-      line = "--- NO OUTPUT ---"
+      line = "  -- NO OUTPUT --"
       dbg.dprint(0,line)
-      loguru.logger.error(f"{host:{hlen}} | {line}")
+      loguru.logger.info(f"{line}")
 
   dbg.leavesub()  
 ### -------------------------------------------------------------------

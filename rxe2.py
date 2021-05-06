@@ -23,7 +23,7 @@ def main():
   if prgargs.listhosts:
     rxe2_mod_general.list_hosts()
   ### otherwise continue with other options  
-  rxe2_mod_general.setup_logging()  
+  logfile = rxe2_mod_general.setup_logging()  
   ### evaluate hosts to hostlist
   hosts     = rxe2_mod_general.buildlist(prgargs.srv,cfg.data['nodefiles'],type='1by1')
   ### password or key ?
@@ -65,33 +65,20 @@ def main():
     ###-------------------------------------------------------------------------
     ##### Start of interactive
     if prgargs.interactive :
-      import rxe2_mod_interactive
+      # import rxe2_mod_interactive
       sys.stdout.flush()
       sys.stderr.flush()
       sys.stdin.flush()
       for host in hosts:
         rxe2_mod_general.print_hostline(user,host,cmd,opts)
-        rxe2_mod_interactive.connect(user,host,cmd,opts)
-
-#        tmpfile = '/tmp/test.log'
-#        target = user+ '@' +host
-#        c = ' '.join(['ssh',target,cmd,opts,"2>&1" ])
-#        dbg.dprint(2, c )
-#        p = subprocess.run(['script','-qec',c, tmpfile])
-#        dbg.dprint(2, p )
-#        with open(tmpfile) as f:
-#          for line in f:
-#            if line.startswith("Skript"):
-#              continue   
-#            if line.startswith("Script"):
-#              continue   
-#            if not line.strip():
-#              continue  
-#            if p.returncode: 
-#              rxe2_mod_general.print_error(host,line.rstrip()) 
-#            else: 
-#              rxe2_mod_general.print_log(host,line.rstrip()) 
-#    ###-------------------------------------------------------------------------
+        loguru.logger.info(f"{user}@{host:25} {cmd} {opts}")
+        target   = user+ '@' +host
+        execcmd = ' '.join(['(','ssh','-tt',target,'"',cmd,opts,'"',cfg.data.redirect])
+        res = os.system(execcmd)
+        loguru.logger.info(f"  -- Exit Code: {res}")
+        rxe2_mod_general.log_and_cleanup(cfg.data.cap_out) 
+        rxe2_mod_general.log_and_cleanup(cfg.data.cap_err) 
+    ###-------------------------------------------------------------------------
     ##### Start of parallel
     else:
       ### with use_pty=True STDOUT and STDERR are always combined

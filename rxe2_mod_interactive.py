@@ -38,32 +38,49 @@ try:
   has_termios = True
 except ImportError:
   has_termios = False
-
 #####---------------------------------------------------------------------
-def interactive_shell(chan):
+def terminal_size():
+    import sys,fcntl, termios, struct
+    h, w, hp, wp = struct.unpack('HHHH',
+        fcntl.ioctl(sys.stdin.fileno(), termios.TIOCGWINSZ,
+        struct.pack('HHHH', 0, 0, 0, 0)))
+    return w, h
+#####---------------------------------------------------------------------
+def interactive_shell(chan,fcmd):
   if has_termios:
-    posix_shell(chan)
+    posix_shell(chan,fcmd)
   else:
-    windows_shell(chan)
+    windows_shell(chan,fcmd)
 
 #####---------------------------------------------------------------------
-def posix_shell(chan):
+def posix_shell(chan,fcmd):
+  from __main__ import dbg
   import select
   oldtty = termios.tcgetattr(sys.stdin)
+  print(oldtty)
   try:
     tty.setraw(sys.stdin.fileno())
     tty.setcbreak(sys.stdin.fileno())
     chan.settimeout(0.0)
+    loop = 0
+    if fcmd :
+      chan.send(fcmd)
     while True:
       r, w, e = select.select([chan, sys.stdin], [], [])
       if chan in r:
         try:
           x = u(chan.recv(1024))
           if len(x) == 0:
-            sys.stdout.write("\r\n*** EOF\r\n")
+            #sys.stdout.write("\r\n*** EOF\r\n")
             break
-          sys.stdout.write(x)
-          sys.stdout.flush()
+          if loop != 0:
+            sys.stdout.write(x)
+            sys.stdout.flush()
+            loop += 1 
+          else:
+            loop += 1 
+            chan.send("\r\n")
+            continue  
         except socket.timeout:
           pass
       if sys.stdin in r:
@@ -72,11 +89,12 @@ def posix_shell(chan):
           break
         chan.send(x)
   finally:
+    print(loop)  
     termios.tcsetattr(sys.stdin, termios.TCSADRAIN, oldtty)
 
 #####---------------------------------------------------------------------
 # thanks to Mike Looijmans for this code
-def windows_shell(chan):
+def windows_shell(chan,fcmd):
   import threading
   sys.stdout.write(
     "Line-buffered terminal emulation. Press F6 or ^Z to send EOF.\r\n\r\n"
@@ -110,18 +128,19 @@ def agent_auth(transport, username):
   Attempt to authenticate to the given transport using any of the private
   keys available from an SSH agent.
   """
+  from __main__ import dbg
   agent = paramiko.Agent()
   agent_keys = agent.get_keys()
   if len(agent_keys) == 0:
     return
   for key in agent_keys:
-    print("Trying ssh-agent key %s" % hexlify(key.get_fingerprint()))
+    dbg.dprint(2,"Trying ssh-agent key %s" % hexlify(key.get_fingerprint()))
     try:
       transport.auth_publickey(username, key)
-      print("... success!")
+      dbg.dprint(2,"... success!")
       return
     except paramiko.SSHException:
-      print("... nope.")
+      dbg.dprint(2,"... nope.")
 
 #####---------------------------------------------------------------------
 def manual_auth(username, hostname):
@@ -160,52 +179,57 @@ def manual_auth(username, hostname):
 
 #####---------------------------------------------------------------------
 ##### This part is to interact with rxe
-def connect(username,hostname,cmd,opts):
+def connect(username,hostname,cmd,opts,**kwdict):
 #  import paramiko,os
+  from __main__ import dbg
   port = 22
   try:
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect((hostname, port))
   except Exception as e:
-    print("*** Connect failed: " + str(e))
-    traceback.print_exc()
+    dbg.dprint(0,"*** Connect failed: " + str(e))
+    # traceback.print_exc()
     sys.exit(1)
   try:
     t = paramiko.Transport(sock)
     try:
       t.start_client()
     except paramiko.SSHException:
-      print("*** SSH negotiation failed.")
+      dbg.dprint(0,"*** SSH negotiation failed.")
       sys.exit(1)
 
     try:
       keys = paramiko.util.load_host_keys(
-        os.path.expanduser("~/.ssh/known_hosts")
-      )
+             os.path.expanduser("~/.ssh/known_hosts"))
     except IOError:
       try:
         keys = paramiko.util.load_host_keys(
-                os.path.expanduser("~/ssh/known_hosts"))
+               os.path.expanduser("~/ssh/known_hosts"))
       except IOError:
-        print("*** Unable to open host keys file")
+        dbg.dprint("*** Unable to open host keys file")
         keys = {}
 
     # check server's host key -- this is important.
     key = t.get_remote_server_key()
-    print("Got", key.get_name(),"Type",type(key))
-    print("Hostname",hostname)
+    dbg.dprint(2,"Got", key.get_name(),"Type",type(key))
+    if key.get_name() == 'ssh-ed25519' :
+      keyname = 'ecdsa-sha2-nistp256'
+    else:
+      keyname = key.get_name()     
+    dbg.dprint(2,"Hostname",hostname)
     for k in keys:
       if k == hostname:
-        print("K:",k,keys[k]) 
+        dbg.dprint(2,"K:",k,keys[k]) 
     if hostname not in keys:
       print("*** WARNING1: Unknown host key!")
-    elif key.get_name() not in keys[hostname]:
-      print("*** WARNING2: Unknown host key!")
-    elif keys[hostname][key.get_name()] != key:
+    elif keyname not in keys[hostname]:
+      dbg.dprint(0 ,"keys[hostname]", keys[hostname].keys())
+      dbg.dprint(0,"*** WARNING2: Unknown host key!")
+    elif keyname != 'ecdsa-sha2-nistp256' and keys[hostname][key.get_name()] != key:
       print("*** WARNING: Host key has changed!!!")
       sys.exit(1)
     else:
-      print("*** Host key OK.")
+      dbg.dprint(2,"*** Host key OK , or cannot be checked")
 
     # get username
     if username == "":
@@ -225,14 +249,15 @@ def connect(username,hostname,cmd,opts):
     chan = t.open_session()
     chan.get_pty()
     chan.invoke_shell()
-    print("*** Here we go!\n")
-    interactive_shell(chan)
+    dbg.dprint(2,"*** Here we go!\n")
+    fcmd = cmd+" "+opts
+    interactive_shell(chan,fcmd)
     chan.close()
     t.close()
 
   except Exception as e:
-    print("*** Caught exception: " + str(e.__class__) + ": " + str(e))
-    traceback.print_exc()
+    dbg.dprint(0,"*** Caught exception: " + str(e.__class__) + ": " + str(e))
+    #traceback.print_exc()
     try:
       t.close()
     except:
