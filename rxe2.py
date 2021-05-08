@@ -11,6 +11,7 @@ def main():
   """ Main part for doing the work
   """
   import os
+  from rxe2_mod_general import prnout
   dbg.entersub()
   user    = prgargs.user
   cmd     = prgargs.cmd
@@ -58,8 +59,6 @@ def main():
 
   start = datetime.datetime.now()
   ### Do connection check if copy i not set
-  import asyncio, asyncssh
-  from rxe2_mod_general import prnout
   if not copy:
     availhosts = asyncio.get_event_loop().run_until_complete(
             rxe2_mod_async.run_mcmds(hosts,cfg.data.chkcmd,
