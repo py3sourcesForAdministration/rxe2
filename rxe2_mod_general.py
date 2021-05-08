@@ -133,7 +133,7 @@ def setup_logging():
   return(logfile)
 
 ###-------------------------------------------------------------------------
-def print_hostline(user,host,cmd,opts):
+def print_hostline(user,host,cmd):
   """ Just print user@host and command 
   """
   from __main__ import dbg,cfg
@@ -141,9 +141,41 @@ def print_hostline(user,host,cmd,opts):
     rst = cfg.data.colors.rst
     fgy = cfg.data.colors.fgy
     fgg = cfg.data.colors.fgg
-    print(f"{fgg}--------------- {user}@{host:25} {cmd} {opts}{rst}")
+    print(f"{fgg}--------------- {user}@{host:25} {cmd}{rst}")
+    loguru.logger.info(f"{fgg}--------------- {user}@{host:25} {cmd}{rst}")
   else:
     dbg.dprint(0,"Host is unset")  
+###-------------------------------------------------------------------------
+def prnout(typ,*args):
+  """ print output to stdout and depending on type:
+      hostline:                  'h',user,host,cmd
+      error   :                  'e',other args  # first one red
+      warning :                  'w',all args    # all yellow
+      info    :                  'i',all args    # all normal
+  """
+  from __main__ import dbg,cfg
+  rst = cfg.data.colors.rst
+  fgy = cfg.data.colors.fgy
+  fgg = cfg.data.colors.fgg
+  fgr = cfg.data.colors.fgr
+  hlen = cfg.data.hlen
+  line = f"error in args to print: {' '.join(args)}"  
+  if typ.startswith( 'h' ):          
+    line = f"{fgg}--------------- {args[0]}@{args[1]:{hlen}} {args[2]}{rst}"
+    loguru.logger.info(line)
+  elif typ.startswith('e'):
+    line = f"  {fgr}{args[0]}{rst} | " + " ".join(args[1:])
+    loguru.logger.error(line)
+  elif typ.startswith('i'):
+    line = f"  {' '.join(args)}"
+    loguru.logger.info(line)
+  elif typ.startswith('w'):
+    line = f"  {fgy}{args[0]}{rst} | " + " ".join(args[1:])
+    loguru.logger.warning(line)
+  else:
+    dbg.dprint(0,line,args)
+    return
+  print(line)    
 
 ###-------------------------------------------------------------------------
 def print_error(host,e):
@@ -163,10 +195,14 @@ def print_log(host,e):
 ###-------------------------------------------------------------------------
 def log_and_cleanup(lfile):
   from __main__ import dbg,cfg,prgargs
+  import re
+  iserr = ''
   if os.path.isfile(lfile):
+    if re.search('err',lfile):
+      iserr = 'stderr: '
     if prgargs.log:
       with open(lfile) as f:
         for line in f: 
-          loguru.logger.info(f"  -- OUT: {line.rstrip()}")
+          loguru.logger.info(f"  {iserr}{line.rstrip()}")
     os.remove(lfile)
 ###-------------------------------------------------------------------------

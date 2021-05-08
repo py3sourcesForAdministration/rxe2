@@ -34,11 +34,11 @@ argdefaults = {
   'listhosts'   : False,
   'log'         : False,
   'interactive' : False,
-  'tmout'       : 3,
+  'tmout'       : 12,
   'user'        : 'root',
   'srv'         : 'localhost',
   'cmd'         : 'ConnCheck',
-  'identity'    : os.path.join(os.environ['HOME'],'.ssh','id_rsa'),
+#  'identity'    : os.path.join(os.environ['HOME'],'.ssh','id_rsa'),
   'password'    : None,
   'opts'        : '',
 } 

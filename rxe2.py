@@ -14,7 +14,7 @@ def main():
   dbg.entersub()
   user    = prgargs.user
   cmd     = prgargs.cmd
-  timeout = prgargs.tmout
+  tmout   = prgargs.tmout
   fdict1  = rxe2_mod_general.get_files(os.path.join(prgdir,'cmdfiles.example'))
   fdict   = { **fdict1,  **rxe2_mod_general.get_files(cfg.data['cmdfiles'])}
   ### Stop if only listing is wanted
@@ -27,9 +27,11 @@ def main():
   ### evaluate hosts to hostlist
   hosts     = rxe2_mod_general.buildlist(prgargs.srv,cfg.data['nodefiles'],type='1by1')
   ### password or key ?
-  kwdict = { 'pkey'     : prgargs.identity }
+  kwdict = { 'username'     : user }
   if prgargs.password:
-    kwdict = { 'password' : prgargs.password }
+    kwdict['password'] = prgargs.password 
+  if prgargs.identity:
+    kwdict['client_keys'] = [prgargs.identity]
   ### prepare command  
   copy = ''
   if prgargs.cmd in fdict:
@@ -44,71 +46,63 @@ def main():
   if prgargs.opts:
     opts = ' '.join(prgargs.opts)
   ### debug print what is done already
-  dbg.dprint(2,"user   =",user)
-  dbg.dprint(2,"hosts  =",hosts)
-  dbg.dprint(2,"cmd    =", cmd)
-  dbg.dprint(2,"copy   =", copy)
-  dbg.dprint(2,"opts   =", opts)
-  dbg.dprint(2,"kwdict =", kwdict)
+  dbg.dprint(2,"user    =",user)
+  dbg.dprint(2,"hosts   =",hosts)
+  dbg.dprint(2,"cmd     =", cmd)
+  dbg.dprint(2,"copy    =", copy)
+  dbg.dprint(2,"opts    =", opts)
+  dbg.dprint(2,"timeout =", opts)
+  dbg.dprint(2,"kwdict  =", kwdict)
 
   start = datetime.datetime.now()
   ### Do connection check always
   import asyncio, asyncssh
-  asyncio.get_event_loop().run_until_complete(
-      rxe2_mod_async.run_multiple_clients(hosts,cmd='Check#Only',username='root'))
-  #asyncio.get_event_loop().run_until_complete(rxe2_mod_async.check_conns(hosts,user))
-  #rxe2_mod_async.check_conns(hosts,user)
-  #dbg.dprint(0,avail)
-  #hosts = rxe2_conncheck.check_conn(hosts,user,kwdict)
+  from rxe2_mod_general import prnout
+  if copy:
+    availhosts = asyncio.get_event_loop().run_until_complete(
+              rxe2_mod_async.run_mcopy(hosts,copy,cmd,**kwdict))
+  else:
+    availhosts = asyncio.get_event_loop().run_until_complete(
+              rxe2_mod_async.run_mcopy(hosts,fdict[cfg.argdefaults.cmd],'/tmp/'+cfg.argdefaults.cmd,**kwdict))
 
-  dbg.dprint(0,"Started with number of hosts:",len(hosts))
-  dbg.dprint(0,"leftover hosts to execute   :",len(cfg.data.availhosts))
-  end = datetime.datetime.now()
-  dbg.dprint(0,"Took",end -start,"to execute")  
+  #dbg.dprint(1,"Started with number of hosts:",len(hosts))
+  #dbg.dprint(1,"leftover hosts to execute   :",len(availhosts))
+  missing = set(hosts) - set(availhosts)
+  #,availhosts)
+  #end = datetime.datetime.now()
+  #dbg.dprint(0,"Took",end -start,"to execute")  
   ### Start for available hosts
+  sys.stdout.flush()
+  sys.stderr.flush()
+  sys.stdin.flush()
   if len(hosts) > 0 :
-  #  client = ParallelSSHClient(hosts,user=user,allow_agent=False,**kwdict)
-  #  if copy: 
-  #    rxe2_mod_parallel.copy_cmd(client,copy,cmd,timeout)
-  
-    ###-------------------------------------------------------------------------
-    ##### Start of interactive
+    ##### ----- Start of interactive -------------------------------------------
     if prgargs.interactive :
-      # import rxe2_mod_interactive
-      sys.stdout.flush()
-      sys.stderr.flush()
-      sys.stdin.flush()
       for host in hosts:
-        rxe2_mod_general.print_hostline(user,host,cmd,opts)
-        loguru.logger.info(f"{user}@{host:25} {cmd} {opts}")
+        prnout('h',user,host,cmd)
         target   = user+ '@' +host
         execcmd = ' '.join(['(','ssh','-tt',target,'"',cmd,opts,'"',cfg.data.redirect])
         res = os.system(execcmd)
-        loguru.logger.info(f"  -- Exit Code: {res}")
+        prnout('i','exit_code:',str(res))
         rxe2_mod_general.log_and_cleanup(cfg.data.cap_out) 
         rxe2_mod_general.log_and_cleanup(cfg.data.cap_err) 
-    ###-------------------------------------------------------------------------
-    ##### Start of parallel
+    ##### ----- Start of parallel ----------------------------------------------
     else:
-      ### with use_pty=True STDOUT and STDERR are always combined
-      dbg.dprint(0,"cmd    =", cmd)
-      output = client.run_command(cmd+" "+opts,stop_on_errors=False,
-               use_pty=True,read_timeout=timeout, return_list=True)
-      ### evaluate output
-      rxe2_mod_parallel.show_output(client,output,cmd,opts)
-      ### End of parallel 
-    ###-------------------------------------------------------------------------
+      asyncio.get_event_loop().run_until_complete(
+                               rxe2_mod_async.run_mcmds(availhosts,cmd+opts,tmout,**kwdict))
+    ##### ----- End of command execution ---------------------------------------
     ### cleanup
     if copy:
-      client.run_command("rm "+cmd, stop_on_errors=False,
-               return_list=True)
+      asyncio.get_event_loop().run_until_complete(
+                               rxe2_mod_async.run_mcmds(availhosts,"rm "+cmd,tmout,**kwdict))
     ### End of available hosts
-    del client
 
   end = datetime.datetime.now()
   dbg.leavesub()
   print()
-  dbg.dprint(0,"Took",end -start,"to execute")  
+  dbg.dprint(0,"Took",end -start,"to execute") 
+  if (len(missing)): 
+    dbg.dprint(0,"Skipped unconnectable Hosts:",missing)
 ###########   D E F A U L T   I N I T   #######################################
 if __name__ == "__main__":
   from mydebug.py3dbg import dbg
