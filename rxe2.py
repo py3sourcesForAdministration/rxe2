@@ -62,7 +62,7 @@ def main():
   if not copy:
     availhosts = asyncio.get_event_loop().run_until_complete(
             rxe2_mod_async.run_mcmds(hosts,cfg.data.chkcmd,
-                 max(tmout/4,3),**kwdict))
+                 max(tmout/4,cfg.data.conntm),**kwdict))
   else:
     availhosts = asyncio.get_event_loop().run_until_complete(
             rxe2_mod_async.run_mcopy(hosts,copy,cmd,**kwdict))

@@ -25,6 +25,7 @@ data = {
   'cap_err'   : capture_err,
   'redirect'  : " ".join(['|','tee',capture_out,')','3>&1','1>&2','2>&3','|','tee',capture_err]), 
   'chkcmd'    : 'echo "Host is available"',
+  'conntm'    : 5,
 }
 argdefaults = { 
   'debug'       : 0,
