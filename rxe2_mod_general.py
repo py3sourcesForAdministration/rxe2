@@ -133,19 +133,6 @@ def setup_logging():
   return(logfile)
 
 ###-------------------------------------------------------------------------
-#def print_hostline(user,host,cmd):
-#  """ Just print user@host and command 
-#  """
-#  from __main__ import dbg,cfg
-#  if host:
-#    rst = cfg.data.colors.rst
-#    fgy = cfg.data.colors.fgy
-#    fgg = cfg.data.colors.fgg
-#    print(f"{fgg}--------------- {user}@{host:25} {cmd}{rst}")
-#    loguru.logger.info(f"{fgg}--------------- {user}@{host:25} {cmd}{rst}")
-#  else:
-#    dbg.dprint(0,"Host is unset")  
-###-------------------------------------------------------------------------
 def prnout(typ,*args):
   """ print output to stdout and depending on type:
       hostline:                  'h',user,host,cmd
@@ -177,21 +164,6 @@ def prnout(typ,*args):
     return
   print(line)    
 
-###-------------------------------------------------------------------------
-#def print_error(host,e):
-#  """ print error """  
-#  from __main__ import dbg, cfg
-#  hlen = cfg.data.hlen
-#  line = "--- NO CONNECTION, MAYBE AUTH OR HOSTNAME PROBLEM ---"
-#  dbg.dprint(256,e)
-#  loguru.logger.error(f"{host:{hlen}} | {e}")
-###-------------------------------------------------------------------------
-#def print_log(host,e):
-#  """ print error """  
-#  from __main__ import dbg,cfg
-#  hlen = cfg.data.hlen
-#  dbg.dprint(0, e)
-#  loguru.logger.info(f"{host:{hlen}} | {e}")
 ###-------------------------------------------------------------------------
 def log_and_cleanup(lfile):
   from __main__ import dbg,cfg,prgargs
