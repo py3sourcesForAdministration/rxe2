@@ -20,13 +20,11 @@ data = {
     'fgy'  : Style.BRIGHT + Fore.YELLOW,
     'fgr'  : Style.BRIGHT + Fore.RED,
   }, 
-  'hlen'      : 13,
-  'cptimeout' : 3,
-  'chktimeout': 1.5,
-  'availhosts': [],
+  'hlen'      : 28,
   'cap_out'   : capture_out,
   'cap_err'   : capture_err,
-  'redirect'  : " ".join(['|','tee',capture_out,')','3>&1','1>&2','2>&3','|','tee',capture_err]) 
+  'redirect'  : " ".join(['|','tee',capture_out,')','3>&1','1>&2','2>&3','|','tee',capture_err]), 
+  'chkcmd'    : 'echo "Host is available"',
 }
 argdefaults = { 
   'debug'       : 0,
@@ -37,7 +35,7 @@ argdefaults = {
   'tmout'       : 12,
   'user'        : 'root',
   'srv'         : 'localhost',
-  'cmd'         : 'ConnCheck',
+  'cmd'         : '',
 #  'identity'    : os.path.join(os.environ['HOME'],'.ssh','id_rsa'),
   'password'    : None,
   'opts'        : '',

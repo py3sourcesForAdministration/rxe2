@@ -34,13 +34,15 @@ def main():
     kwdict['client_keys'] = [prgargs.identity]
   ### prepare command  
   copy = ''
-  if prgargs.cmd in fdict:
-    copy = fdict[prgargs.cmd]
-    cmd  = '/tmp/'+prgargs.cmd
-  elif prgargs.cmd.startswith('./'):
-    copy = prgargs.cmd
-    basename = os.path.basename(copy)
-    cmd  = '/tmp/'+basename
+
+  if prgargs.cmd:
+    if prgargs.cmd in fdict:
+      copy = fdict[prgargs.cmd]
+      cmd  = '/tmp/'+prgargs.cmd
+    elif prgargs.cmd.startswith('./'):
+      copy = prgargs.cmd
+      basename = os.path.basename(copy)
+      cmd  = '/tmp/'+basename
   ### prepare commandline opts
   opts = '' 
   if prgargs.opts:
@@ -55,27 +57,24 @@ def main():
   dbg.dprint(2,"kwdict  =", kwdict)
 
   start = datetime.datetime.now()
-  ### Do connection check always
+  ### Do connection check if copy i not set
   import asyncio, asyncssh
   from rxe2_mod_general import prnout
-  if copy:
+  if not copy:
     availhosts = asyncio.get_event_loop().run_until_complete(
-              rxe2_mod_async.run_mcopy(hosts,copy,cmd,**kwdict))
+            rxe2_mod_async.run_mcmds(hosts,cfg.data.chkcmd,
+                 max(tmout/4,3),**kwdict))
   else:
     availhosts = asyncio.get_event_loop().run_until_complete(
-              rxe2_mod_async.run_mcopy(hosts,fdict[cfg.argdefaults.cmd],'/tmp/'+cfg.argdefaults.cmd,**kwdict))
-
-  #dbg.dprint(1,"Started with number of hosts:",len(hosts))
-  #dbg.dprint(1,"leftover hosts to execute   :",len(availhosts))
+            rxe2_mod_async.run_mcopy(hosts,copy,cmd,**kwdict))
+  dbg.dprint(1,"Started with number of hosts:",len(hosts))
+  dbg.dprint(1,"leftover hosts to execute   :",len(availhosts))
   missing = set(hosts) - set(availhosts)
-  #,availhosts)
-  #end = datetime.datetime.now()
-  #dbg.dprint(0,"Took",end -start,"to execute")  
   ### Start for available hosts
   sys.stdout.flush()
   sys.stderr.flush()
   sys.stdin.flush()
-  if len(hosts) > 0 :
+  if len(availhosts) > 0 and len(cmd):
     ##### ----- Start of interactive -------------------------------------------
     if prgargs.interactive :
       for host in hosts:
@@ -89,12 +88,12 @@ def main():
     ##### ----- Start of parallel ----------------------------------------------
     else:
       asyncio.get_event_loop().run_until_complete(
-                               rxe2_mod_async.run_mcmds(availhosts,cmd+opts,tmout,**kwdict))
+          rxe2_mod_async.run_mcmds(availhosts,cmd+opts,tmout,**kwdict))
     ##### ----- End of command execution ---------------------------------------
     ### cleanup
     if copy:
       asyncio.get_event_loop().run_until_complete(
-                               rxe2_mod_async.run_mcmds(availhosts,"rm "+cmd,tmout,**kwdict))
+          rxe2_mod_async.run_mcmds(availhosts,"rm "+cmd,tmout,**kwdict))
     ### End of available hosts
 
   end = datetime.datetime.now()

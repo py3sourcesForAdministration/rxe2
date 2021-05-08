@@ -133,18 +133,18 @@ def setup_logging():
   return(logfile)
 
 ###-------------------------------------------------------------------------
-def print_hostline(user,host,cmd):
-  """ Just print user@host and command 
-  """
-  from __main__ import dbg,cfg
-  if host:
-    rst = cfg.data.colors.rst
-    fgy = cfg.data.colors.fgy
-    fgg = cfg.data.colors.fgg
-    print(f"{fgg}--------------- {user}@{host:25} {cmd}{rst}")
-    loguru.logger.info(f"{fgg}--------------- {user}@{host:25} {cmd}{rst}")
-  else:
-    dbg.dprint(0,"Host is unset")  
+#def print_hostline(user,host,cmd):
+#  """ Just print user@host and command 
+#  """
+#  from __main__ import dbg,cfg
+#  if host:
+#    rst = cfg.data.colors.rst
+#    fgy = cfg.data.colors.fgy
+#    fgg = cfg.data.colors.fgg
+#    print(f"{fgg}--------------- {user}@{host:25} {cmd}{rst}")
+#    loguru.logger.info(f"{fgg}--------------- {user}@{host:25} {cmd}{rst}")
+#  else:
+#    dbg.dprint(0,"Host is unset")  
 ###-------------------------------------------------------------------------
 def prnout(typ,*args):
   """ print output to stdout and depending on type:
@@ -164,13 +164,13 @@ def prnout(typ,*args):
     line = f"{fgg}--------------- {args[0]}@{args[1]:{hlen}} {args[2]}{rst}"
     loguru.logger.info(line)
   elif typ.startswith('e'):
-    line = f"  {fgr}{args[0]}{rst} | " + " ".join(args[1:])
+    line = f"{fgr}{args[0]}{rst} | " + " ".join(args[1:])
     loguru.logger.error(line)
   elif typ.startswith('i'):
-    line = f"  {' '.join(args)}"
+    line = f"{' '.join(args)}"
     loguru.logger.info(line)
   elif typ.startswith('w'):
-    line = f"  {fgy}{args[0]}{rst} | " + " ".join(args[1:])
+    line = f"{fgy}{args[0]}{rst} | " + " ".join(args[1:])
     loguru.logger.warning(line)
   else:
     dbg.dprint(0,line,args)
@@ -178,20 +178,20 @@ def prnout(typ,*args):
   print(line)    
 
 ###-------------------------------------------------------------------------
-def print_error(host,e):
-  """ print error """  
-  from __main__ import dbg, cfg
-  hlen = cfg.data.hlen
+#def print_error(host,e):
+#  """ print error """  
+#  from __main__ import dbg, cfg
+#  hlen = cfg.data.hlen
 #  line = "--- NO CONNECTION, MAYBE AUTH OR HOSTNAME PROBLEM ---"
-  dbg.dprint(256,e)
-  loguru.logger.error(f"{host:{hlen}} | {e}")
+#  dbg.dprint(256,e)
+#  loguru.logger.error(f"{host:{hlen}} | {e}")
 ###-------------------------------------------------------------------------
-def print_log(host,e):
-  """ print error """  
-  from __main__ import dbg,cfg
-  hlen = cfg.data.hlen
+#def print_log(host,e):
+#  """ print error """  
+#  from __main__ import dbg,cfg
+#  hlen = cfg.data.hlen
 #  dbg.dprint(0, e)
-  loguru.logger.info(f"{host:{hlen}} | {e}")
+#  loguru.logger.info(f"{host:{hlen}} | {e}")
 ###-------------------------------------------------------------------------
 def log_and_cleanup(lfile):
   from __main__ import dbg,cfg,prgargs
@@ -203,6 +203,6 @@ def log_and_cleanup(lfile):
     if prgargs.log:
       with open(lfile) as f:
         for line in f: 
-          loguru.logger.info(f"  {iserr}{line.rstrip()}")
+          loguru.logger.info(f"{iserr}{line.rstrip()}")
     os.remove(lfile)
 ###-------------------------------------------------------------------------

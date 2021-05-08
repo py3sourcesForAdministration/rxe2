@@ -43,10 +43,11 @@ async def run_cmd(host,cmd,**kwargs):
 
 ### -------------------------------------------------------------------
 async def run_mcmds(hosts,cmd,tmout,**kwargs):
-    from __main__ import dbg
+    from __main__ import dbg,cfg,prgargs
     from rxe2_mod_general import prnout
     dbg.entersub()
     dbg.dprint(2,'cmd:',cmd,', tmout:',tmout,', kwargs:',kwargs)
+    availhosts = []
     #tasks = (run_cmd(host,cmd,**kwargs) for host in hosts)
     tasks = (asyncio.wait_for(run_cmd(host,cmd,**kwargs),timeout=tmout) for host in hosts)
     results = await asyncio.gather(*tasks, return_exceptions=True)
@@ -54,6 +55,21 @@ async def run_mcmds(hosts,cmd,tmout,**kwargs):
         for i, result in enumerate(results, 0):
             if isinstance(result, Exception):
                 prnout('w',"Exception in rm cmd:", hosts[i],"remove failed")
+    elif cmd == cfg.data.chkcmd:
+        for i, result in enumerate(results, 0):
+            if isinstance(result, asyncio.TimeoutError):
+                prnout('h',kwargs['username'],hosts[i],'Conncheck') 
+                prnout('e',"Timeout Exception:",str(result))
+            elif isinstance(result, Exception):
+                prnout('h',kwargs['username'],hosts[i],'Conncheck') 
+                prnout('e',"Exception in conntest:", str(result))
+            else:
+                if not len(prgargs.cmd):
+                  prnout('h',kwargs['username'],hosts[i],'Conncheck') 
+                  prnout('i',"{}".format(result.stdout.rstrip(),end=''))
+                availhosts.append(hosts[i])
+        dbg.leavesub()        
+        return availhosts       
     else:          
         for i, result in enumerate(results, 0):
             prnout('h',kwargs['username'],hosts[i],cmd) 
