@@ -6,3 +6,5 @@ paramiko
 orig
 logs
 testprogs
+cmdfiles_*
+nodefiles_*
