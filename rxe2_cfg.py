@@ -11,8 +11,8 @@ from __main__ import prgdir,prgname
 capture_out = prgname+'_out.log'
 capture_err = prgname+'_err.log'
 data = {
-  'nodefiles' : os.path.realpath(os.path.join(prgdir,'nodefiles_use')),
-  'cmdfiles'  : os.path.realpath(os.path.join(prgdir,'cmdfiles_use')),
+  'nodefiles' : os.path.realpath(os.path.join(prgdir,'nodefiles.example')),
+  'cmdfiles'  : os.path.realpath(os.path.join(prgdir,'cmdfiles.example')),
   ### define colors
   'colors'    : {
     'rst'  : Style.RESET_ALL,
@@ -37,7 +37,6 @@ argdefaults = {
   'user'        : 'root',
   'srv'         : 'localhost',
   'cmd'         : '',
-#  'identity'    : os.path.join(os.environ['HOME'],'.ssh','id_rsa'),
   'password'    : None,
   'opts'        : '',
 } 
