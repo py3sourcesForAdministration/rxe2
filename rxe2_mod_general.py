@@ -126,6 +126,8 @@ def setup_logging():
       currdate = date.today().strftime("%Y-%m-%d") 
       move_to = os.path.join(prgdir,'logs',currdate+"_"+prgname+".log")
       os.rename(logfile,move_to)
+      open(logfile,'a').close()
+      os.chmod(logfile,0o664)
     ### init log
     loguru.logger.add(logfile,
         format="{time:YYYY-MM-DD HH:mm:ss} | {level:7} | {message}")
