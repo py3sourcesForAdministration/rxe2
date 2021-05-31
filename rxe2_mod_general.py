@@ -150,7 +150,7 @@ def prnout(typ,*args):
   hlen = cfg.data.hlen
   line = f"error in args to print: {' '.join(args)}"  
   if typ.startswith( 'h' ):          
-    line = f"{fgg}--------------- {args[0]}@{args[1]:{hlen}} {args[2]}{rst}"
+    line = f"{fgg}--------------- {args[0]}@{args[1]:{hlen}} {' '.join(args[2:])}{rst}"
     loguru.logger.info(line)
   elif typ.startswith('e'):
     line = f"{fgr}{args[0]}{rst} | " + " ".join(args[1:])

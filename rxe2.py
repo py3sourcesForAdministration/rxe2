@@ -54,7 +54,7 @@ def main():
   dbg.dprint(2,"cmd     =", cmd)
   dbg.dprint(2,"copy    =", copy)
   dbg.dprint(2,"opts    =", opts)
-  dbg.dprint(2,"timeout =", opts)
+  dbg.dprint(2,"timeout =", tmout)
   dbg.dprint(2,"kwdict  =", kwdict)
 
   start = datetime.datetime.now()
@@ -77,7 +77,7 @@ def main():
     ##### ----- Start of interactive -------------------------------------------
     if prgargs.interactive :
       for host in hosts:
-        prnout('h',user,host,cmd)
+        prnout('h',user,host,cmd,opts)
         target   = user+ '@' +host
         execcmd = ' '.join(['(','ssh','-tt',target,'"',cmd,opts,'"',cfg.data.redirect])
         res = os.system(execcmd)
@@ -87,7 +87,7 @@ def main():
     ##### ----- Start of parallel ----------------------------------------------
     else:
       asyncio.get_event_loop().run_until_complete(
-          rxe2_mod_async.run_mcmds(availhosts,cmd+opts,tmout,**kwdict))
+          rxe2_mod_async.run_mcmds(availhosts,cmd+" "+opts,tmout,**kwdict))
     ##### ----- End of command execution ---------------------------------------
     ### cleanup
     if copy:
